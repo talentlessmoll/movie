@@ -1,82 +1,65 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Hexaro Sports | Live Engine</title>
+    <title>Hexaro | Server Provider Test</title>
     <style>
-        body { background: #000; color: #fff; font-family: 'Inter', sans-serif; padding: 20px; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
-        .match-card { 
-            background: #111; padding: 20px; border-radius: 12px; border: 1px solid #222;
-            transition: 0.3s; cursor: pointer;
-        }
-        .match-card:hover { border-color: #E50914; transform: translateY(-3px); }
-        .watch-btn { 
-            background: #E50914; color: #fff; border: none; width: 100%; 
-            padding: 10px; margin-top: 15px; border-radius: 6px; font-weight: bold;
-        }
-        /* Player Modal */
-        #player-modal {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.95); display: none; flex-direction: column; z-index: 9999;
-        }
-        .close-bar { padding: 15px; text-align: right; background: #111; }
-        iframe { flex-grow: 1; border: none; width: 100%; height: 100%; }
+        body { background: #000; color: #fff; font-family: sans-serif; padding: 20px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; }
+        .card { background: #111; padding: 15px; border-radius: 10px; border: 1px solid #333; }
+        .btn-group { display: flex; gap: 5px; margin-top: 10px; flex-wrap: wrap; }
+        button { flex: 1; padding: 8px; border: none; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold; }
+        .vidsrc { background: #ff4500; color: white; }
+        .embedsu { background: #00ced1; color: black; }
+        .sport7 { background: #32cd32; color: black; }
+        iframe { width: 100%; height: 400px; border: 2px solid #E50914; margin-top: 20px; display: none; }
     </style>
 </head>
 <body>
 
-    <h2 style="color: #E50914; letter-spacing: 2px;">HEXARO LIVE SPORTS</h2>
-    <div id="status">Scanning for live matches...</div>
+    <h2>Test: embed.su vs vidsrc vs sport7</h2>
     <div id="results" class="grid"></div>
-
-    <div id="player-modal">
-        <div class="close-bar"><button onclick="closePlayer()" style="color:white; background:red; padding:10px;">CLOSE PLAYER</button></div>
-        <iframe id="video-frame" src="" allowfullscreen></iframe>
-    </div>
+    <iframe id="test-player" allowfullscreen></iframe>
 
     <script>
-        // Server used for the "flawless" 2026 experience
-        const EMBED_SERVER = "https://vidsrc.cc/v2/embed/sports/"; // Mirror: https://embed.su/sports/match/
+        // These are the 2026 endpoints for the servers you mentioned
+        const SERVERS = {
+            vidsrc: "https://vidsrc.cc/v2/embed/sports/",
+            embedsu: "https://embed.su/sports/live/",
+            sport7: "https://sport7.pro/embed/"
+        };
 
-        async function fetchLive() {
+        async function loadMatches() {
             const today = new Date().toISOString().split('T')[0];
             const res = await fetch(`https://www.thesportsdb.com/api/v1/json/3/eventsday.php?d=${today}`);
             const data = await res.json();
             const container = document.getElementById('results');
 
-            if (!data.events) { document.getElementById('status').innerText = "No more matches tonight."; return; }
-            document.getElementById('status').innerText = `Found ${data.events.length} Events`;
-
             data.events.forEach(match => {
-                // Generate a "Slug" (e.g., "Chelsea vs Arsenal" -> "chelsea-vs-arsenal")
+                // We create a "slug" because these servers prefer "name" over "id"
                 const slug = match.strEvent.toLowerCase().replace(/ vs /g, '-vs-').replace(/ /g, '-');
                 
                 container.innerHTML += `
-                    <div class="match-card">
-                        <div style="font-size: 12px; color: #E50914; font-weight:bold;">● ${match.strLeague}</div>
-                        <div style="font-size: 18px; margin: 10px 0;">${match.strEvent}</div>
-                        <button class="watch-btn" onclick="openPlayer('${slug}')">WATCH NOW</button>
+                    <div class="card">
+                        <strong>${match.strEvent}</strong>
+                        <div class="btn-group">
+                            <button class="vidsrc" onclick="test('vidsrc', '${slug}')">VIDSRC</button>
+                            <button class="embedsu" onclick="test('embedsu', '${slug}')">EMBED.SU</button>
+                            <button class="sport7" onclick="test('sport7', '${slug}')">SPORT7</button>
+                        </div>
                     </div>
                 `;
             });
         }
 
-        function openPlayer(slug) {
-            const modal = document.getElementById('player-modal');
-            const frame = document.getElementById('video-frame');
-            
-            // In 2026, most servers accept the slug or title as a lookup
-            frame.src = `${EMBED_SERVER}${slug}`;
-            modal.style.display = 'flex';
+        function test(server, slug) {
+            const player = document.getElementById('test-player');
+            player.style.display = 'block';
+            // We plug the slug into the server URL
+            player.src = `${SERVERS[server]}${slug}`;
+            window.scrollTo(0, document.body.scrollHeight);
         }
 
-        function closePlayer() {
-            document.getElementById('player-modal').style.display = 'none';
-            document.getElementById('video-frame').src = ""; // Stop the noise
-        }
-
-        fetchLive();
+        loadMatches();
     </script>
 </body>
 </html>
