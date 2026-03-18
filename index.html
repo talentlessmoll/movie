@@ -1,48 +1,82 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Hexaro Sports | 2026 Live Hub</title>
+    <meta charset="UTF-8">
+    <title>Hexaro Sports | Live Engine</title>
     <style>
-        body { background: #000; color: #fff; font-family: sans-serif; margin: 0; display: flex; height: 100vh; }
-        #sidebar { width: 250px; background: #111; padding: 20px; overflow-y: auto; border-right: 1px solid #333; }
-        #player-container { flex-grow: 1; display: flex; flex-direction: column; }
-        .channel-btn { 
-            background: #222; padding: 15px; margin-bottom: 10px; border-radius: 8px; 
-            cursor: pointer; text-align: center; border: 1px solid transparent; transition: 0.3s;
+        body { background: #000; color: #fff; font-family: 'Inter', sans-serif; padding: 20px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
+        .match-card { 
+            background: #111; padding: 20px; border-radius: 12px; border: 1px solid #222;
+            transition: 0.3s; cursor: pointer;
         }
-        .channel-btn:hover { border-color: #E50914; background: #333; }
-        iframe { width: 100%; height: 100%; border: none; }
-        .header { padding: 20px; background: #000; border-bottom: 1px solid #222; font-weight: bold; color: #E50914; }
+        .match-card:hover { border-color: #E50914; transform: translateY(-3px); }
+        .watch-btn { 
+            background: #E50914; color: #fff; border: none; width: 100%; 
+            padding: 10px; margin-top: 15px; border-radius: 6px; font-weight: bold;
+        }
+        /* Player Modal */
+        #player-modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95); display: none; flex-direction: column; z-index: 9999;
+        }
+        .close-bar { padding: 15px; text-align: right; background: #111; }
+        iframe { flex-grow: 1; border: none; width: 100%; height: 100%; }
     </style>
 </head>
 <body>
 
-    <div id="sidebar">
-        <h3 style="margin-top: 0;">Channels</h3>
-        <div class="channel-btn" onclick="play('stream-50')">Sky Sports Main</div>
-        <div class="channel-btn" onclick="play('stream-33')">Sky Sports PL</div>
-        <div class="channel-btn" onclick="play('stream-101')">SuperSport PL</div>
-        <div class="channel-btn" onclick="play('stream-102')">SuperSport Football</div>
-        <div class="channel-btn" onclick="play('stream-103')">SuperSport Variety</div>
-        <div class="channel-btn" onclick="play('stream-41')">TNT Sports 1</div>
-        <div class="channel-btn" onclick="play('stream-12')">beIN Sports 1</div>
-    </div>
+    <h2 style="color: #E50914; letter-spacing: 2px;">HEXARO LIVE SPORTS</h2>
+    <div id="status">Scanning for live matches...</div>
+    <div id="results" class="grid"></div>
 
-    <div id="player-container">
-        <div class="header" id="now-playing">SELECT A CHANNEL TO WATCH</div>
+    <div id="player-modal">
+        <div class="close-bar"><button onclick="closePlayer()" style="color:white; background:red; padding:10px;">CLOSE PLAYER</button></div>
         <iframe id="video-frame" src="" allowfullscreen></iframe>
     </div>
 
     <script>
-        // In 2026, DaddyLive uses .php stream files. 
-        // If the domain 'thedaddy.to' is blocked, change it here to 'dlhd.sx' or 'thedaddy.click'
-        const BASE_URL = "https://thedaddy.to/embed/"; 
+        // Server used for the "flawless" 2026 experience
+        const EMBED_SERVER = "https://vidsrc.cc/v2/embed/sports/"; // Mirror: https://embed.su/sports/match/
 
-        function play(id) {
-            const frame = document.getElementById('video-frame');
-            document.getElementById('now-playing').innerText = "STREAMING: " + id.toUpperCase();
-            frame.src = `${BASE_URL}${id}.php`;
+        async function fetchLive() {
+            const today = new Date().toISOString().split('T')[0];
+            const res = await fetch(`https://www.thesportsdb.com/api/v1/json/3/eventsday.php?d=${today}`);
+            const data = await res.json();
+            const container = document.getElementById('results');
+
+            if (!data.events) { document.getElementById('status').innerText = "No more matches tonight."; return; }
+            document.getElementById('status').innerText = `Found ${data.events.length} Events`;
+
+            data.events.forEach(match => {
+                // Generate a "Slug" (e.g., "Chelsea vs Arsenal" -> "chelsea-vs-arsenal")
+                const slug = match.strEvent.toLowerCase().replace(/ vs /g, '-vs-').replace(/ /g, '-');
+                
+                container.innerHTML += `
+                    <div class="match-card">
+                        <div style="font-size: 12px; color: #E50914; font-weight:bold;">● ${match.strLeague}</div>
+                        <div style="font-size: 18px; margin: 10px 0;">${match.strEvent}</div>
+                        <button class="watch-btn" onclick="openPlayer('${slug}')">WATCH NOW</button>
+                    </div>
+                `;
+            });
         }
+
+        function openPlayer(slug) {
+            const modal = document.getElementById('player-modal');
+            const frame = document.getElementById('video-frame');
+            
+            // In 2026, most servers accept the slug or title as a lookup
+            frame.src = `${EMBED_SERVER}${slug}`;
+            modal.style.display = 'flex';
+        }
+
+        function closePlayer() {
+            document.getElementById('player-modal').style.display = 'none';
+            document.getElementById('video-frame').src = ""; // Stop the noise
+        }
+
+        fetchLive();
     </script>
 </body>
 </html>
