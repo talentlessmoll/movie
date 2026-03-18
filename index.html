@@ -1,22 +1,213 @@
 <!DOCTYPE html>
-<html>
-<body style="background: #000; color: #fff; font-family: sans-serif; text-align: center;">
-    <h2>Hexaro Sports - Server Tester</h2>
-    
-    <div style="margin-bottom: 20px;">
-        <button onclick="test('https://thedaddy.top/embed/stream-50.php')">Test DaddyLive (Sky Sports)</button>
-        <button onclick="test('https://vidsrc.to/embed/sports/814392')">Test VidSrc (Live Match)</button>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Hexaro Movies | Cinematic Hub</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #000000;
+            --accent: #E50914;
+            --glass: rgba(255, 255, 255, 0.08);
+            --blur: blur(25px);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { 
+            background: var(--bg); 
+            color: #fff; 
+            font-family: 'Inter', sans-serif; 
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+
+        /* --- UI COMPONENTS --- */
+        .hero {
+            width: 100%;
+            height: 70dvh;
+            background: linear-gradient(to top, var(--bg) 5%, transparent 60%), url('https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&q=80&w=2070') center/cover;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 40px;
+        }
+
+        .hero h1 { font-size: 3rem; font-weight: 900; margin-bottom: 10px; text-transform: uppercase; }
+        
+        /* Floating Pill Nav */
+        .nav-pill {
+            position: fixed;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--glass);
+            backdrop-filter: var(--blur);
+            padding: 12px 30px;
+            border-radius: 50px;
+            display: flex;
+            gap: 25px;
+            border: 1px solid rgba(255,255,255,0.1);
+            z-index: 1000;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .nav-pill span { 
+            font-size: 0.85rem; 
+            font-weight: 700; 
+            opacity: 0.6; 
+            cursor: pointer; 
+            transition: 0.3s;
+        }
+        .nav-pill span.active { opacity: 1; color: var(--accent); }
+
+        /* Content Rows */
+        .section { padding: 20px; display: none; margin-bottom: 100px; }
+        .section.active { display: block; animation: fadeIn 0.5s ease; }
+
+        .row-title { font-size: 1.4rem; font-weight: 700; margin: 20px 0 15px; display: flex; align-items: center; gap: 10px; }
+        .row-title::before { content: ''; width: 4px; height: 20px; background: var(--accent); border-radius: 2px; }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 15px;
+        }
+
+        /* Sports Cards */
+        .channel-card {
+            background: var(--glass);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            cursor: pointer;
+        }
+        .channel-card:active { transform: scale(0.95); }
+        .channel-card img { width: 60px; height: 60px; object-fit: contain; margin-bottom: 10px; filter: drop-shadow(0 5px 10px rgba(0,0,0,0.5)); }
+        .channel-card span { display: block; font-weight: 700; font-size: 0.8rem; }
+
+        /* Player Overlay */
+        .player-modal {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #000;
+            z-index: 2000;
+            display: none;
+            flex-direction: column;
+        }
+        .player-header {
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            background: linear-gradient(to bottom, #000, transparent);
+        }
+        .close-btn { background: var(--accent); color: #fff; border: none; padding: 8px 15px; border-radius: 5px; font-weight: 700; }
+
+        iframe { width: 100%; height: 100%; border: none; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Mobile Adjustments */
+        @media (max-width: 600px) {
+            .hero h1 { font-size: 2rem; }
+            .grid { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="hero">
+        <h1 id="hero-title">HEXARO SPORTS</h1>
+        <p style="opacity: 0.7;">Live Global Sports & Premier League Hub</p>
     </div>
 
-    <div id="player-container" style="width: 80%; height: 500px; margin: 0 auto; border: 2px solid red;">
-        <p>Click a button to test a server...</p>
+    <div class="nav-pill">
+        <span class="active" onclick="showSection('sports')">SPORTS</span>
+        <span onclick="showSection('movies')">MOVIES</span>
+        <span onclick="showSection('anime')">ANIME</span>
+        <span onclick="showSection('cartoons')">KIDS</span>
+    </div>
+
+    <div id="sports" class="section active">
+        <div class="row-title">LIVE CHANNELS</div>
+        <div class="grid" id="sports-grid"></div>
+    </div>
+
+    <div id="movies" class="section">
+        <div class="row-title">LATEST MOVIES</div>
+        <div class="grid" id="movie-grid">
+            <p style="padding: 20px; opacity: 0.5;">Bollywood, Nollywood & Hollywood Content Loading...</p>
+        </div>
+    </div>
+
+    <div class="player-modal" id="playerModal">
+        <div class="player-header">
+            <span id="playing-title" style="font-weight: 700;">LIVE STREAM</span>
+            <button class="close-btn" onclick="closePlayer()">CLOSE</button>
+        </div>
+        <iframe id="main-player" src="" allowfullscreen allow="autoplay; encrypted-media"></iframe>
     </div>
 
     <script>
-        function test(url) {
-            const container = document.getElementById('player-container');
-            container.innerHTML = `<iframe src="${url}" width="100%" height="100%" frameborder="0" allowfullscreen allow="autoplay; encrypted-media"></iframe>`;
+        // --- HARDCODED CONFIG ---
+        const SPORTS_BASE = "https://thedaddy.top/embed/stream-"; // Mirror: dlhd.sx
+        
+        const CHANNELS = [
+            { name: "SuperSport PL", id: "101", logo: "https://upload.wikimedia.org/wikipedia/en/5/51/SuperSport_logo.svg" },
+            { name: "SuperSport Grandstand", id: "100", logo: "https://upload.wikimedia.org/wikipedia/en/5/51/SuperSport_logo.svg" },
+            { name: "SuperSport La Liga", id: "104", logo: "https://upload.wikimedia.org/wikipedia/en/5/51/SuperSport_logo.svg" },
+            { name: "Sky Sports Main", id: "50", logo: "https://upload.wikimedia.org/wikipedia/en/3/3e/Sky_Sports_Main_Event_logo.svg" },
+            { name: "Sky Sports PL", id: "33", logo: "https://upload.wikimedia.org/wikipedia/en/9/9b/Sky_Sports_Premier_League_logo.svg" },
+            { name: "TNT Sports 1", id: "41", logo: "https://upload.wikimedia.org/wikipedia/en/b/b9/TNT_Sports_logo.svg" },
+            { name: "beIN Sports 1", id: "12", logo: "https://upload.wikimedia.org/wikipedia/commons/b/bc/BeIN_Sports_logo.svg" },
+            { name: "ESPN USA", id: "15", logo: "https://upload.wikimedia.org/wikipedia/commons/a/ad/ESPN_logo.svg" }
+        ];
+
+        // --- CORE FUNCTIONS ---
+        function showSection(id) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-pill span').forEach(s => s.classList.remove('active'));
+            
+            document.getElementById(id).classList.add('active');
+            event.target.classList.add('active');
+            document.getElementById('hero-title').innerText = `HEXARO ${id.toUpperCase()}`;
         }
+
+        function playStream(id, name) {
+            const modal = document.getElementById('playerModal');
+            const player = document.getElementById('main-player');
+            document.getElementById('playing-title').innerText = name;
+            
+            player.src = `${SPORTS_BASE}${id}.php`;
+            modal.style.display = 'flex';
+        }
+
+        function closePlayer() {
+            const modal = document.getElementById('playerModal');
+            const player = document.getElementById('main-player');
+            player.src = "";
+            modal.style.display = 'none';
+        }
+
+        // --- RENDER SPORTS ---
+        function initSports() {
+            const grid = document.getElementById('sports-grid');
+            CHANNELS.forEach(ch => {
+                const card = document.createElement('div');
+                card.className = 'channel-card';
+                card.onclick = () => playStream(ch.id, ch.name);
+                card.innerHTML = `
+                    <img src="${ch.logo}" alt="${ch.name}">
+                    <span>${ch.name}</span>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // Run on load
+        window.onload = initSports;
     </script>
 </body>
 </html>
