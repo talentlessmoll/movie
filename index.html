@@ -1,158 +1,22 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Hexaro Movies</title>
-    <style>
-        :root { --red: #E50914; --black: #000000; --gray: #141414; --text: #ffffff; }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
-        body { background: var(--black); color: var(--text); font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; margin: 0; padding-bottom: 70px; overflow-x: hidden; }
-        
-        /* Layout Components */
-        .header { padding: 20px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; background: linear-gradient(to bottom, rgba(0,0,0,0.9), transparent); z-index: 100; }
-        .logo { color: var(--red); font-size: 26px; font-weight: 900; letter-spacing: -1px; }
-        
-        #search-container { padding: 0 15px; margin-bottom: 20px; }
-        #search-input { width: 100%; padding: 14px; background: #222; border: 1px solid #333; border-radius: 8px; color: #fff; font-size: 16px; transition: 0.3s; }
-        #search-input:focus { border-color: var(--red); background: #2a2a2a; }
-
-        /* Netflix-Style Rows */
-        .section-title { padding-left: 20px; font-size: 18px; font-weight: bold; margin: 25px 0 10px; color: #e5e5e5; }
-        .movie-row { display: flex; overflow-x: auto; gap: 12px; padding: 0 20px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; }
-        .movie-row::-webkit-scrollbar { display: none; }
-        .movie-card { min-width: 130px; scroll-snap-align: start; transition: transform 0.2s; cursor: pointer; }
-        .movie-card img { width: 100%; border-radius: 6px; aspect-ratio: 2/3; object-fit: cover; background: #1a1a1a; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
-        .movie-card:active { transform: scale(0.94); }
-
-        /* Fullscreen Player Modal */
-        #player-modal { position: fixed; inset: 0; background: var(--black); z-index: 1000; display: none; flex-direction: column; height: 100dvh; }
-        #player-frame { width: 100%; flex-grow: 1; border: none; background: #000; }
-        .player-header { padding: 12px; display: flex; align-items: center; gap: 10px; background: #111; border-bottom: 1px solid #222; }
-        .btn { padding: 10px 16px; border: 1px solid #333; background: #222; color: #fff; border-radius: 6px; font-size: 14px; font-weight: bold; }
-        .btn-close { background: var(--red); border: none; }
-        #server-select { flex-grow: 0; background: #222; color: #fff; padding: 10px; border-radius: 6px; border: 1px solid #333; }
-        
-        /* Fixed Bottom Nav */
-        .bottom-nav { position: fixed; bottom: 0; width: 100%; height: 65px; background: rgba(18, 18, 18, 0.95); backdrop-filter: blur(10px); display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #222; z-index: 100; }
-        .nav-item { color: #888; text-decoration: none; font-size: 11px; text-align: center; display: flex; flex-direction: column; gap: 4px; }
-        .nav-item.active { color: var(--red); }
-        .nav-icon { font-size: 20px; }
-    </style>
-</head>
-<body>
-
-    <div class="header">
-        <div class="logo">HEXARO</div>
+<html>
+<body style="background: #000; color: #fff; font-family: sans-serif; text-align: center;">
+    <h2>Hexaro Sports - Server Tester</h2>
+    
+    <div style="margin-bottom: 20px;">
+        <button onclick="test('https://thedaddy.top/embed/stream-50.php')">Test DaddyLive (Sky Sports)</button>
+        <button onclick="test('https://vidsrc.to/embed/sports/814392')">Test VidSrc (Live Match)</button>
     </div>
 
-    <div id="search-container">
-        <input type="text" id="search-input" placeholder="Search movies..." oninput="debounceSearch()">
-    </div>
-
-    <div id="main-content">
-        <div class="section-title" id="row-1-title">Trending Movies</div>
-        <div id="trending-row" class="movie-row"></div>
-
-        <div class="section-title">Popular TV Shows</div>
-        <div id="tv-row" class="movie-row"></div>
-    </div>
-
-    <div id="player-modal">
-        <div class="player-header">
-            <button class="btn btn-close" onclick="closePlayer()">✕</button>
-            <select id="server-select" onchange="switchServer(this.value)">
-                <option value="0">Server 1 (Fast)</option>
-                <option value="1">Server 2 (Backup)</option>
-                <option value="2">Server 3 (Multi)</option>
-                <option value="3">Server 4 (Stable)</option>
-                <option value="4">Server 5 (VIP)</option>
-                <option value="5">Server 6 (Extra)</option>
-            </select>
-            <span id="display-title" style="font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></span>
-        </div>
-        <iframe id="player-frame" allowfullscreen src=""></iframe>
-    </div>
-
-    <div class="bottom-nav">
-        <div class="nav-item active"><span class="nav-icon">🏠</span>Home</div>
-        <div class="nav-item"><span class="nav-icon">🔍</span>Search</div>
-        <div class="nav-item"><span class="nav-icon">📺</span>TV</div>
+    <div id="player-container" style="width: 80%; height: 500px; margin: 0 auto; border: 2px solid red;">
+        <p>Click a button to test a server...</p>
     </div>
 
     <script>
-        const TMDB_KEY = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI4NGU5MjE3NGY5NDJjZDliOWRiMWQwMDgxYjk3MjFjNyIsIm5iZiI6MTc3MzMxMTE5OC43NzksInN1YiI6IjY5YjI5NGRlNTVmYmU0NzYyNWQ0M2E1NiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.vDphoMqA7Ptm--JB6aB6IsVlK9DtVFuW98Azecgz9sM";
-        
-        // Servers you reported working
-        const SERVERS = [
-            "https://vidsrc.me/embed/",
-            "https://vidsrc.cc/v2/embed/movie/",
-            "https://multiembed.mov/?video_id=",
-            "https://vidsrc.icu/embed/movie/",
-            "https://vidsrc.vip/embed/movie/",
-            "https://moviesapi.club/movie/"
-        ];
-
-        let activeId = "";
-        let searchTimer;
-
-        async function api(path) {
-            const r = await fetch(`https://api.themoviedb.org/3/${path}`, {
-                headers: { Authorization: `Bearer ${TMDB_KEY}` }
-            });
-            return r.json();
+        function test(url) {
+            const container = document.getElementById('player-container');
+            container.innerHTML = `<iframe src="${url}" width="100%" height="100%" frameborder="0" allowfullscreen allow="autoplay; encrypted-media"></iframe>`;
         }
-
-        async function init() {
-            const movies = await api('trending/movie/week');
-            render('trending-row', movies.results);
-            
-            const tv = await api('trending/tv/week');
-            render('tv-row', tv.results);
-        }
-
-        function render(id, list) {
-            const el = document.getElementById(id);
-            el.innerHTML = list.map(m => `
-                <div class="movie-card" onclick="play('${m.id}', '${m.title || m.name}')">
-                    <img src="https://image.tmdb.org/t/p/w342${m.poster_path}" alt="poster">
-                </div>
-            `).join('');
-        }
-
-        function debounceSearch() {
-            clearTimeout(searchTimer);
-            searchTimer = setTimeout(async () => {
-                const q = document.getElementById('search-input').value;
-                if (!q) {
-                    document.getElementById('row-1-title').innerText = "Trending Movies";
-                    return init();
-                }
-                const results = await api(`search/multi?query=${encodeURIComponent(q)}`);
-                document.getElementById('row-1-title').innerText = "Search Results";
-                render('trending-row', results.results.filter(x => x.poster_path));
-            }, 600);
-        }
-
-        function play(id, title) {
-            activeId = id;
-            document.getElementById('display-title').innerText = title;
-            document.getElementById('player-modal').style.display = 'flex';
-            switchServer(0);
-        }
-
-        function switchServer(idx) {
-            let base = SERVERS[idx];
-            let final = base.includes('multiembed') ? `${base}${activeId}&tmdb=1` : `${base}${activeId}`;
-            document.getElementById('player-frame').src = final;
-        }
-
-        function closePlayer() {
-            document.getElementById('player-modal').style.display = 'none';
-            document.getElementById('player-frame').src = "";
-        }
-
-        init();
     </script>
 </body>
 </html>
